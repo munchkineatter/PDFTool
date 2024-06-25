@@ -130,6 +130,13 @@ window.onload = function() {
                 pageNumber.innerHTML = `<span class="current-number">${pageOrder.length + 1}</span> <span class="original-number">(PDF ${i + 1}, Page ${j})</span>`;
                 pageItem.appendChild(pageNumber);
 
+                // Add delete button
+                const deleteButton = document.createElement('div');
+                deleteButton.className = 'delete-page';
+                deleteButton.innerHTML = '×';
+                deleteButton.addEventListener('click', deletePage);
+                pageItem.appendChild(deleteButton);
+
                 pageList.appendChild(pageItem);
                 pageOrder.push({pdf: i, page: j});
             }
@@ -157,6 +164,21 @@ window.onload = function() {
             const currentNumber = item.querySelector('.current-number');
             currentNumber.textContent = index + 1;
         });
+    }
+
+    function deletePage(event) {
+        const pageItem = event.target.closest('.page-item');
+        const index = Array.from(pageList.children).indexOf(pageItem);
+        
+        pageOrder.splice(index, 1);
+        pageItem.remove();
+        
+        updatePageNumbers();
+        
+        if (pageOrder.length === 0) {
+            saveBtn.disabled = true;
+            clearReorderBtn.disabled = true;
+        }
     }
 
     async function saveMergedAndReorderedPDF() {
