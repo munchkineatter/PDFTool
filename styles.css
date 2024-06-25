@@ -1,0 +1,73 @@
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.card {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-custom {
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#file-list, #merge-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#page-list-container {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#page-list {
+    display: grid;
+    gap: 20px;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.page-item {
+    cursor: move;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.page-item canvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.page-number {
+    margin-top: 5px;
+    font-size: 0.9em;
+}
+
+.current-number {
+    font-weight: bold;
+}
+
+.original-number {
+    color: #666;
+}
