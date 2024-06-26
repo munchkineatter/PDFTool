@@ -9,38 +9,57 @@
     <style>
         .page-item {
             position: relative;
+            cursor: pointer;
+        }
+        .delete-page, .rotate-page, .enlarge-page {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
         }
         .delete-page {
-            position: absolute;
             top: 5px;
             right: 5px;
-            width: 20px;
-            height: 20px;
             background-color: red;
             color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
         }
         .rotate-page {
-            position: absolute;
             top: 5px;
             left: 5px;
-            width: 20px;
-            height: 20px;
             background-color: #007bff;
             color: white;
-            border-radius: 50%;
+        }
+        .enlarge-page {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #333;
+            font-size: 16px;
+        }
+        .expanded-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
+            z-index: 1000;
+        }
+        .expanded-view .page-content {
+            max-height: 90vh;
+            max-width: 90vw;
+            overflow: auto;
         }
     </style>
 </head>

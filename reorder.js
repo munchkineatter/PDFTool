@@ -145,6 +145,23 @@ window.onload = function() {
                 rotateButton.addEventListener('click', rotatePage);
                 pageItem.appendChild(rotateButton);
 
+                // Add enlarge button
+                const enlargeButton = document.createElement('div');
+                enlargeButton.className = 'enlarge-page';
+                enlargeButton.innerHTML = '🔍';
+                enlargeButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showExpandedView(canvas);
+                });
+                pageItem.appendChild(enlargeButton);
+
+                // Add double-click event for expanded view
+                pageItem.addEventListener('dblclick', (e) => {
+                    if (e.target !== deleteButton && e.target !== rotateButton && e.target !== enlargeButton) {
+                        showExpandedView(canvas);
+                    }
+                });
+
                 pageList.appendChild(pageItem);
                 pageOrder.push({pdf: i, page: j, rotation: 0});
             }
@@ -175,6 +192,7 @@ window.onload = function() {
     }
 
     function deletePage(event) {
+        event.stopPropagation();
         const pageItem = event.target.closest('.page-item');
         const index = Array.from(pageList.children).indexOf(pageItem);
         
@@ -190,6 +208,7 @@ window.onload = function() {
     }
 
     function rotatePage(event) {
+        event.stopPropagation();
         const pageItem = event.target.closest('.page-item');
         const index = Array.from(pageList.children).indexOf(pageItem);
         const currentRotation = parseInt(pageItem.getAttribute('data-rotation')) || 0;
@@ -199,6 +218,47 @@ window.onload = function() {
         pageItem.querySelector('canvas').style.transform = `rotate(${newRotation}deg)`;
 
         pageOrder[index].rotation = newRotation;
+    }
+
+    function showExpandedView(canvas) {
+        const expandedView = document.createElement('div');
+        expandedView.className = 'expanded-view';
+        
+        const content = document.createElement('div');
+        content.className = 'page-content';
+        
+        // Create a new canvas for the expanded view
+        const expandedCanvas = document.createElement('canvas');
+        const expandedContext = expandedCanvas.getContext('2d');
+        
+        // Set the size of the new canvas
+        const aspectRatio = canvas.width / canvas.height;
+        const maxHeight = window.innerHeight * 0.9;
+        const maxWidth = window.innerWidth * 0.9;
+        let newHeight = maxHeight;
+        let newWidth = newHeight * aspectRatio;
+        
+        if (newWidth > maxWidth) {
+            newWidth = maxWidth;
+            newHeight = newWidth / aspectRatio;
+        }
+        
+        expandedCanvas.width = newWidth;
+        expandedCanvas.height = newHeight;
+        
+        // Draw the original canvas onto the new canvas
+        expandedContext.drawImage(canvas, 0, 0, newWidth, newHeight);
+        
+        content.appendChild(expandedCanvas);
+        expandedView.appendChild(content);
+        document.body.appendChild(expandedView);
+
+        // Close expanded view when clicking outside the page
+        expandedView.addEventListener('click', (e) => {
+            if (e.target === expandedView) {
+                document.body.removeChild(expandedView);
+            }
+        });
     }
 
     async function saveMergedAndReorderedPDF() {
