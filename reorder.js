@@ -124,6 +124,7 @@ window.onload = function() {
                 pageItem.appendChild(canvas);
                 pageItem.setAttribute('data-pdf', i);
                 pageItem.setAttribute('data-page', j);
+                pageItem.setAttribute('data-rotation', '0');
 
                 const pageNumber = document.createElement('div');
                 pageNumber.className = 'page-number';
@@ -137,8 +138,15 @@ window.onload = function() {
                 deleteButton.addEventListener('click', deletePage);
                 pageItem.appendChild(deleteButton);
 
+                // Add rotate button
+                const rotateButton = document.createElement('div');
+                rotateButton.className = 'rotate-page';
+                rotateButton.innerHTML = '↻';
+                rotateButton.addEventListener('click', rotatePage);
+                pageItem.appendChild(rotateButton);
+
                 pageList.appendChild(pageItem);
-                pageOrder.push({pdf: i, page: j});
+                pageOrder.push({pdf: i, page: j, rotation: 0});
             }
         }
 
@@ -181,6 +189,18 @@ window.onload = function() {
         }
     }
 
+    function rotatePage(event) {
+        const pageItem = event.target.closest('.page-item');
+        const index = Array.from(pageList.children).indexOf(pageItem);
+        const currentRotation = parseInt(pageItem.getAttribute('data-rotation')) || 0;
+        const newRotation = (currentRotation + 90) % 360;
+
+        pageItem.setAttribute('data-rotation', newRotation);
+        pageItem.querySelector('canvas').style.transform = `rotate(${newRotation}deg)`;
+
+        pageOrder[index].rotation = newRotation;
+    }
+
     async function saveMergedAndReorderedPDF() {
         if (pdfDocuments.length === 0 || pageOrder.length === 0) {
             alert('Please upload at least one PDF file first.');
@@ -192,11 +212,16 @@ window.onload = function() {
         for (let item of pageOrder) {
             const srcDoc = await PDFLib.PDFDocument.load(await pdfDocuments[item.pdf].arrayBuffer());
             const [copiedPage] = await mergedPdf.copyPages(srcDoc, [item.page - 1]);
+            
+            if (item.rotation !== 0) {
+                copiedPage.setRotation(PDFLib.degrees(item.rotation));
+            }
+            
             mergedPdf.addPage(copiedPage);
         }
 
         const pdfBytes = await mergedPdf.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        saveAs(blob, 'merged_and_reordered_document.pdf');
+        saveAs(blob, 'merged_reordered_and_rotated_document.pdf');
     }
 };
