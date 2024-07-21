@@ -3,68 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Page Reorder</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <title>Reorder PDF Pages - PDF Editor Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
-    <style>
-        .page-item {
-            position: relative;
-            cursor: pointer;
-        }
-        .delete-page, .rotate-page, .enlarge-page {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 10;
-        }
-        .delete-page {
-            top: 5px;
-            right: 5px;
-            background-color: red;
-            color: white;
-        }
-        .rotate-page {
-            top: 5px;
-            left: 5px;
-            background-color: #007bff;
-            color: white;
-        }
-        .enlarge-page {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(255, 255, 255, 0.7);
-            color: #333;
-            font-size: 16px;
-        }
-        .expanded-view {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .expanded-view .page-content {
-            max-height: 90vh;
-            max-width: 90vw;
-            overflow: auto;
-        }
-    </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">PDF Editor Suite</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,54 +20,58 @@
                         <a class="nav-link" href="index.html">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="convert.html">Convert PDF to Images</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="merge.html">Merge PDFs and Images</a>
+                        <a class="nav-link" href="convert.html">Convert PDF/Images</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="reorder.html">Reorder PDF Pages</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="bleed-remover.html">Remove Bleed Lines</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <main class="container-fluid my-5 flex-grow-1">
+    <div class="container-fluid my-5 flex-grow-1" role="main">
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="card mb-4">
                     <div class="card-body">
                         <h2 class="card-title mb-4 text-center">Reorder PDF Pages</h2>
-                        <div class="mb-3">
-                            <input type="file" id="pdf-file" accept=".pdf" multiple class="form-control">
+                        <div id="drop-area" class="mb-3">
+                            <p class="text-center">Drag and drop your PDF here or click to select</p>
+                            <input type="file" id="pdf-file" accept=".pdf" class="d-none">
+                            <button id="file-select" class="btn btn-primary w-100">Select PDF</button>
                         </div>
-                        <div id="file-list" class="mb-3"></div>
+                        <div id="file-info" class="alert alert-info d-none" role="alert"></div>
                         <div class="mb-3 text-center">
-                            <button id="size-btn" class="btn btn-secondary btn-sm">Size: M</button>
+                            <button id="size-btn" class="btn btn-secondary">Size: M</button>
                         </div>
                         <div id="page-list-container" class="mb-3">
                             <div id="page-list"></div>
                         </div>
                         <div class="text-center">
-                            <button id="save-btn" class="btn btn-primary btn-custom" disabled>Save Merged and Reordered PDF</button>
-                            <button id="clear-reorder-btn" class="btn btn-secondary btn-custom ms-2" disabled>Clear List</button>
+                            <button id="save-btn" class="btn btn-primary" disabled>Save Reordered PDF</button>
+                            <button id="clear-btn" class="btn btn-secondary" disabled>Clear</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
-    
-    <footer class="bg-dark text-white text-center py-3 mt-auto">
-        <p class="mb-0">&copy; 2024 PDF Editor Suite. All rights reserved.</p>
+    </div>
+
+    <footer class="mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">© 2024 PDF Editor Suite. All rights reserved.</span>
+        </div>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script src="reorder.js"></script>
 </body>
 </html>
