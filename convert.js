@@ -1,69 +1,137 @@
-window.onload = function() {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
-
-    const pdfFile = document.getElementById('pdf-file');
+document.addEventListener('DOMContentLoaded', () => {
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+    const fileSelect = document.getElementById('file-select');
     const fileList = document.getElementById('file-list');
     const convertBtn = document.getElementById('convert-btn');
-    const clearConvertBtn = document.getElementById('clear-convert-btn');
+    const clearBtn = document.getElementById('clear-btn');
     const progressBar = document.querySelector('.progress-bar');
-    const progressContainer = document.getElementById('progress');
+    const progressContainer = document.querySelector('.progress');
+    const conversionTypeRadios = document.getElementsByName('conversionType');
+    const pdfToImageOptions = document.getElementById('pdfToImageOptions');
 
-    let convertFiles = [];
+    let files = [];
 
-    pdfFile.addEventListener('change', updateFileList);
-    convertBtn.addEventListener('click', convertPDFs);
-    clearConvertBtn.addEventListener('click', clearConvertList);
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
 
-    function updateFileList(event) {
-        const newFiles = Array.from(event.target.files);
-        convertFiles = [...convertFiles, ...newFiles];
-        renderConvertList();
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
 
-    function renderConvertList() {
-        fileList.innerHTML = convertFiles.map((file, index) => `
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const newFiles = [...dt.files];
+        handleFiles(newFiles);
+    }
+
+    fileSelect.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles([...e.target.files]);
+    });
+
+    function handleFiles(newFiles) {
+        files = [...files, ...newFiles];
+        updateFileList();
+        updateConvertButton();
+        updateConversionType();
+    }
+
+    function updateFileList() {
+        fileList.innerHTML = files.map((file, index) => `
             <div class="file-item">
                 <span>${file.name}</span>
                 <button class="btn btn-sm btn-danger remove-file" data-index="${index}">Remove</button>
             </div>
         `).join('');
-        
-        convertBtn.disabled = convertFiles.length === 0;
-        clearConvertBtn.disabled = convertFiles.length === 0;
 
-        // Add event listeners for remove buttons
         document.querySelectorAll('.remove-file').forEach(button => {
             button.addEventListener('click', removeFile);
         });
     }
 
-    function removeFile(event) {
-        const index = event.target.getAttribute('data-index');
-        convertFiles.splice(index, 1);
-        renderConvertList();
+    function removeFile(e) {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        files.splice(index, 1);
+        updateFileList();
+        updateConvertButton();
+        updateConversionType();
     }
 
-    function clearConvertList() {
-        pdfFile.value = '';
-        convertFiles = [];
-        renderConvertList();
+    function updateConvertButton() {
+        convertBtn.disabled = files.length === 0;
+        clearBtn.disabled = files.length === 0;
     }
 
-    async function convertPDFs() {
-        if (convertFiles.length === 0) return;
+    function updateConversionType() {
+        const allImages = files.every(file => file.type.startsWith('image/'));
+        const conversionType = allImages ? 'imageToPdf' : 'pdfToImage';
+        
+        document.getElementById(conversionType).checked = true;
+        pdfToImageOptions.style.display = conversionType === 'pdfToImage' ? 'block' : 'none';
+    }
 
-        progressContainer.classList.remove('d-none');
-        progressBar.style.width = '0%';
-        convertBtn.disabled = true;
+    clearBtn.addEventListener('click', () => {
+        files = [];
+        updateFileList();
+        updateConvertButton();
+        updateConversionType();
+    });
 
+    conversionTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            pdfToImageOptions.style.display = radio.value === 'pdfToImage' ? 'block' : 'none';
+        });
+    });
+
+    convertBtn.addEventListener('click', async () => {
+        const selectedConversionType = document.querySelector('input[name="conversionType"]:checked').value;
+        
+        if (selectedConversionType === 'pdfToImage') {
+            await convertPDFToImage();
+        } else {
+            await convertImageToPDF();
+        }
+    });
+
+    async function convertPDFToImage() {
         const imageFormat = document.querySelector('input[name="imageFormat"]:checked').value;
         const downloadOption = document.querySelector('input[name="downloadOption"]:checked').value;
-
+        
+        progressContainer.classList.remove('d-none');
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        
         const zip = new JSZip();
         let processedFiles = 0;
         let totalPages = 0;
 
-        for (let file of convertFiles) {
+        for (let file of files) {
+            if (file.type !== 'application/pdf') continue;
+
             const pdfData = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({data: pdfData}).promise;
             totalPages += pdf.numPages;
@@ -89,16 +157,75 @@ window.onload = function() {
                     saveAs(blob, fileName);
                 }
 
-                updateProgress(++processedFiles / totalPages * 100);
+                processedFiles++;
+                updateProgress(processedFiles / totalPages * 100);
             }
         }
 
         if (downloadOption === 'zip') {
             const content = await zip.generateAsync({type: 'blob'});
-            saveAs(content, `pdf_images.zip`);
+            saveAs(content, `converted_images.zip`);
         }
 
-        convertBtn.disabled = false;
+        progressContainer.classList.add('d-none');
+    }
+
+    async function convertImageToPDF() {
+        progressContainer.classList.remove('d-none');
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+
+        const pdfDoc = await PDFLib.PDFDocument.create();
+        let processedFiles = 0;
+
+        for (let file of files) {
+            if (!file.type.startsWith('image/')) continue;
+
+            const imageData = await file.arrayBuffer();
+            let image;
+            if (file.type === 'image/jpeg') {
+                image = await pdfDoc.embedJpg(imageData);
+            } else if (file.type === 'image/png') {
+                image = await pdfDoc.embedPng(imageData);
+            } else {
+                continue;
+            }
+
+            const imgWidth = image.width;
+            const imgHeight = image.height;
+            const isLandscape = imgWidth > imgHeight;
+
+            let pageWidth, pageHeight;
+            if (isLandscape) {
+                pageWidth = PDFLib.PageSizes.A4[1];
+                pageHeight = PDFLib.PageSizes.A4[0];
+            } else {
+                pageWidth = PDFLib.PageSizes.A4[0];
+                pageHeight = PDFLib.PageSizes.A4[1];
+            }
+
+            const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+            const scale = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+
+            const x = (pageWidth - imgWidth * scale) / 2;
+            const y = (pageHeight - imgHeight * scale) / 2;
+
+            page.drawImage(image, {
+                x: x,
+                y: y,
+                width: imgWidth * scale,
+                height: imgHeight * scale,
+            });
+
+            processedFiles++;
+            updateProgress(processedFiles / files.length * 100);
+        }
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        saveAs(blob, 'converted_images.pdf');
+
         progressContainer.classList.add('d-none');
     }
 
@@ -106,4 +233,4 @@ window.onload = function() {
         progressBar.style.width = `${percentage}%`;
         progressBar.textContent = `${Math.round(percentage)}%`;
     }
-};
+});
